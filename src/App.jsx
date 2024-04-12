@@ -1,12 +1,16 @@
 import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import MainPage from './components/MainPage';
+import ProjectStatusPage from './components/ProjectStatusPage';
 import './App.css';
-
-const App = () => {
+function App() {
   return (
-    <div className="App">
-      <MainPage />
-    </div>
+    <Router>
+      <Switch>
+        <Route exact path="/" component={MainPage} />
+        <Route path="/project-status" component={ProjectStatusPage} />
+      </Switch>
+    </Router>
   );
 }
 

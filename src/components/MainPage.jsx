@@ -1,14 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import { Redirect } from "react-router-dom";
+import logo from "../assets/logo.png";
 const MainPage = () => {
   const [formData, setFormData] = useState({
     name: "",
-    project: "", // Corrected field name to match MongoDB schema
+    project: "",
     url: "",
     build: "choose"
   });
+  const[borderColor, setBorderColor] = useState("");
   const [message, setMessage] = useState("");
+  const [projectAvailability, setProjectAvailability] = useState(null);
+  const [redirect, setRedirect] = useState(false); // State to handle redirection
+
+  useEffect(() => {
+    const checkProjectAvailability = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/check-project?name=${formData.project}`);
+        setProjectAvailability(response.data.available);
+      } catch (error) {
+        console.error("Error checking project availability:", error);
+      }
+    };
+
+    checkProjectAvailability();
+  }, [formData.project]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,34 +33,36 @@ const MainPage = () => {
       ...formData,
       [name]: value
     });
+    checkProjectAvailability(value);
   };
-
-  /* const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/submit-form', formData);
-      setMessage("Successfully submitted.");
-    } catch (error) {
-      setMessage("Error: Project name must be unique.");
-    }
-  }; */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        const response = await axios.post('http://localhost:3000/submit-form', formData);
-        setMessage("Successfully submitted.");
-        console.log(response.data); 
+      const response = await axios.post('http://localhost:3000/submit-form', formData);
+      setMessage("Successfully submitted.");
+      setRedirect(true); // Set redirect to true after successful submission
+      console.log(response.data); 
     } catch (error) {
-        setMessage("Error: Project name must be unique.");
+      setMessage("Error: Project name must be unique.");
     }
-};
+  };
+
+  // Redirect to the project status page if redirect state is true
+  if (redirect) {
+    return <Redirect to="/project-status" />;
+  }
 
   return (
-    <div id="main">
-      <h1>VERCEL</h1>
+
+    <div>
+      
+      <img src={logo} alt="Vercel Logo" i className="logo" />
+      <div id="main">      
+      <h1>Login To Vercel</h1>
       <form onSubmit={handleSubmit}>
         <label htmlFor="name" className="input_box">
+          {/* Label for name input */}
         </label>
         <input
           type="text"
@@ -52,8 +71,18 @@ const MainPage = () => {
           value={formData.name}
           onChange={handleChange}
         />
-
+        <div className="ack">
+          {/* Display project name availability message */}
+          {formData.project !== "" && projectAvailability !== null && (
+            <p style={{ color: projectAvailability ? "green" : "red" }}>
+              {projectAvailability ? "Project name is available" : "Project name is not available"}
+            </p>
+            
+          )}
+        </div>
+        
         <label htmlFor="project" className="input_box">
+          {/* Label for project input */}
         </label>
         <input
           type="text" 
@@ -61,6 +90,7 @@ const MainPage = () => {
           name="project"
           value={formData.project}
           onChange={handleChange}
+          className={formData.project !== "" && projectAvailability !== null ? (projectAvailability ? "green-border" : "red-border") : ""}
         />
 
         <label htmlFor="url" className="input_box">
@@ -89,6 +119,7 @@ const MainPage = () => {
         <button type="submit">Submit</button>
       </form>
       {message && <p>{message}</p>}
+    </div>
     </div>
   );
 };
